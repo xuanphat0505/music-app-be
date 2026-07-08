@@ -1,0 +1,41 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
+import { Artist } from '@/modules/artists/schemas/artist.schema';
+import { Album } from '@/modules/albums/schemas/album.schema';
+
+// Định nghĩa lớp Schema lưu trữ thông tin chi tiết bài hát, liên kết nhạc trực tuyến và ảnh bìa
+@Schema({ timestamps: true })
+export class Song extends Document {
+  @Prop({ type: String, required: true, unique: true, index: true })
+  audiusId: string;
+
+  @Prop({ type: String, required: true })
+  title: string;
+
+  @Prop({ type: Number, required: true })
+  duration: number;
+
+  @Prop({ type: String, default: '' })
+  artwork: string;
+
+  @Prop({ type: String, default: '' })
+  genre: string;
+
+  @Prop({ type: Number, default: 0 })
+  playsCount: number;
+
+  @Prop({ type: Number, default: 0 })
+  audiusPlaysCount: number;
+
+  @Prop({ type: Types.ObjectId, ref: 'Artist', required: true, index: true })
+  artist: Types.ObjectId | Artist;
+
+  @Prop({ type: Types.ObjectId, ref: 'Album', default: null, index: true })
+  album: Types.ObjectId | Album | null;
+
+  @Prop({ type: String, default: '' })
+  streamUrl: string;
+}
+
+export const SongSchema = SchemaFactory.createForClass(Song);
+export type SongDocument = Song & Document;
