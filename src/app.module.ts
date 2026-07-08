@@ -3,15 +3,15 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './modules/auth/auth.module';
-import { UsersModule } from './modules/users/users.module';
-import { SyncModule } from './modules/sync/sync.module';
-import { SongsModule } from './modules/songs/songs.module';
-import { ArtistsModule } from './modules/artists/artists.module';
-import { AlbumsModule } from './modules/albums/albums.module';
-import { PlaylistsModule } from './modules/playlists/playlists.module';
-import { FavoritesModule } from './modules/favorites/favorites.module';
-import { HistoryModule } from './modules/history/history.module';
+import { AuthModule } from '@/modules/auth/auth.module';
+import { UsersModule } from '@/modules/users/users.module';
+import { SyncModule } from '@/modules/sync/sync.module';
+import { SongsModule } from '@/modules/songs/songs.module';
+import { ArtistsModule } from '@/modules/artists/artists.module';
+import { AlbumsModule } from '@/modules/albums/albums.module';
+import { PlaylistsModule } from '@/modules/playlists/playlists.module';
+import { FavoritesModule } from '@/modules/favorites/favorites.module';
+import { HistoryModule } from '@/modules/history/history.module';
 
 @Module({
   imports: [
