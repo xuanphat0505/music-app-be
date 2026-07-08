@@ -1,7 +1,7 @@
 import { Controller, Put, Body, UseGuards, Req, Get } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { ResponseMessage } from '../../common/decorators/response-message.decorator';
+import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 
 // Lớp UsersController định nghĩa các tuyến API cập nhật cấu hình hoặc hồ sơ người dùng
 @Controller('users')
