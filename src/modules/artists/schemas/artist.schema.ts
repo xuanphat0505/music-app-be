@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-// Định nghĩa lớp Schema lưu thông tin chi tiết của nghệ sĩ/ca sĩ được đồng bộ từ Audius
+// Schema lưu thông tin chi tiết của nghệ sĩ/ca sĩ được đồng bộ từ Audius
 @Schema({ timestamps: true })
 export class Artist extends Document {
   @Prop({ type: String, required: true, unique: true, index: true })
@@ -10,7 +10,7 @@ export class Artist extends Document {
   @Prop({ type: String, required: true })
   username: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String, required: true, index: true })
   name: string;
 
   @Prop({ type: String, default: '' })
