@@ -3,13 +3,13 @@ import { Document, Types } from 'mongoose';
 import { Artist } from '@/modules/artists/schemas/artist.schema';
 import { Album } from '@/modules/albums/schemas/album.schema';
 
-// Định nghĩa lớp Schema lưu trữ thông tin chi tiết bài hát, liên kết nhạc trực tuyến và ảnh bìa
+// Schema lưu trữ thông tin chi tiết bài hát, liên kết nhạc trực tuyến và ảnh bìa
 @Schema({ timestamps: true })
 export class Song extends Document {
   @Prop({ type: String, required: true, unique: true, index: true })
   audiusId: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String, required: true, index: true })
   title: string;
 
   @Prop({ type: Number, required: true })
@@ -18,10 +18,10 @@ export class Song extends Document {
   @Prop({ type: String, default: '' })
   artwork: string;
 
-  @Prop({ type: String, default: '' })
+  @Prop({ type: String, default: '', index: true })
   genre: string;
 
-  @Prop({ type: Number, default: 0 })
+  @Prop({ type: Number, default: 0, index: true })
   playsCount: number;
 
   @Prop({ type: Number, default: 0 })
