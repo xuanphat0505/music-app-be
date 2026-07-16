@@ -44,11 +44,16 @@ export class UsersService {
   }
 
   // băm nhỏ và lưu trữ hoặc xóa bỏ Refresh Token của user
-  async updateRefreshToken(id: string, refreshToken: string | null): Promise<void> {
+  async updateRefreshToken(
+    id: string,
+    refreshToken: string | null,
+  ): Promise<void> {
     let hashedToken: string | null = null;
     if (refreshToken) {
       hashedToken = await bcrypt.hash(refreshToken, 10);
     }
-    await this.userModel.findByIdAndUpdate(id, { refreshToken: hashedToken }).exec();
+    await this.userModel
+      .findByIdAndUpdate(id, { refreshToken: hashedToken })
+      .exec();
   }
 }

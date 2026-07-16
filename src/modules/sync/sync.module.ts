@@ -6,11 +6,7 @@ import { SongsModule } from '@/modules/songs/songs.module';
 import { AlbumsModule } from '@/modules/albums/albums.module';
 
 @Module({
-  imports: [
-    ArtistsModule,
-    SongsModule,
-    AlbumsModule,
-  ],
+  imports: [ArtistsModule, SongsModule, AlbumsModule],
   controllers: [SyncController],
   providers: [SyncService],
   exports: [SyncService],

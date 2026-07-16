@@ -35,6 +35,12 @@ export class Song extends Document {
 
   @Prop({ type: String, default: '' })
   streamUrl: string;
+
+  @Prop({ type: String, default: '' })
+  lyrics: string;
+
+  @Prop({ type: String, default: '' })
+  syncedLyrics: string;
 }
 
 export const SongSchema = SchemaFactory.createForClass(Song);

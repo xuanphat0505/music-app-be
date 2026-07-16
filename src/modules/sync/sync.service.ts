@@ -26,7 +26,9 @@ export class SyncService {
   async syncTrendingTracks(limit = 50, offset = 0): Promise<boolean> {
     try {
       const nodeUrl = await this.getHealthyNode();
-      this.logger.log(`Bắt đầu tải nhạc thịnh hành từ: ${nodeUrl} (limit: ${limit}, offset: ${offset})`);
+      this.logger.log(
+        `Bắt đầu tải nhạc thịnh hành từ: ${nodeUrl} (limit: ${limit}, offset: ${offset})`,
+      );
 
       const response = await axios.get(`${nodeUrl}/v1/tracks/trending`, {
         params: {
@@ -98,7 +100,9 @@ export class SyncService {
   async syncTrendingAlbums(limit = 10, offset = 0): Promise<boolean> {
     try {
       const nodeUrl = await this.getHealthyNode();
-      this.logger.log(`Bắt đầu tải Album thịnh hành từ: ${nodeUrl} (limit: ${limit}, offset: ${offset})`);
+      this.logger.log(
+        `Bắt đầu tải Album thịnh hành từ: ${nodeUrl} (limit: ${limit}, offset: ${offset})`,
+      );
 
       const response = await axios.get(`${nodeUrl}/v1/playlists/trending`, {
         params: {

@@ -1,4 +1,13 @@
-import { Controller, Post, Get, Body, UseGuards, Req, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  UseGuards,
+  Req,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
@@ -39,11 +48,15 @@ export class AuthController {
     }
     try {
       const payload = await this.jwtService.verifyAsync(refreshToken, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET') || 'musichub_refresh_secret_key_456!',
+        secret:
+          this.configService.get<string>('JWT_REFRESH_SECRET') ||
+          'musichub_refresh_secret_key_456!',
       });
       return this.authService.refreshTokens(payload.sub, refreshToken);
-    } catch (err) {
-      throw new ForbiddenException('Refresh token không hợp lệ hoặc đã hết hạn.');
+    } catch {
+      throw new ForbiddenException(
+        'Refresh token không hợp lệ hoặc đã hết hạn.',
+      );
     }
   }
 
@@ -60,7 +73,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   @ResponseMessage('Lấy thông tin tài khoản thành công.')
-  async getProfile(@Req() req: any) {
+  getProfile(@Req() req: any) {
     return req.user;
   }
 }

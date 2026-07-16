@@ -1,4 +1,9 @@
-import { Injectable, ConflictException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
@@ -27,10 +32,13 @@ export class AuthService {
       email: registerDto.email,
       username: registerDto.username,
       password: hashedPassword,
-    } as any);
+    });
 
     const tokens = await this.generateTokens(user._id.toString(), user.email);
-    await this.usersService.updateRefreshToken(user._id.toString(), tokens.refreshToken);
+    await this.usersService.updateRefreshToken(
+      user._id.toString(),
+      tokens.refreshToken,
+    );
 
     return {
       user: {
@@ -47,18 +55,30 @@ export class AuthService {
 
   // Xác thực đăng nhập tài khoản bằng email và mật khẩu
   async login(loginDto: LoginDto) {
-    const user = await this.usersService.findByEmailWithPassword(loginDto.email);
+    const user = await this.usersService.findByEmailWithPassword(
+      loginDto.email,
+    );
     if (!user) {
-      throw new UnauthorizedException('Tài khoản hoặc mật khẩu không chính xác.');
+      throw new UnauthorizedException(
+        'Tài khoản hoặc mật khẩu không chính xác.',
+      );
     }
 
-    const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      user.password,
+    );
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Tài khoản hoặc mật khẩu không chính xác.');
+      throw new UnauthorizedException(
+        'Tài khoản hoặc mật khẩu không chính xác.',
+      );
     }
 
     const tokens = await this.generateTokens(user._id.toString(), user.email);
-    await this.usersService.updateRefreshToken(user._id.toString(), tokens.refreshToken);
+    await this.usersService.updateRefreshToken(
+      user._id.toString(),
+      tokens.refreshToken,
+    );
 
     return {
       user: {
@@ -80,13 +100,19 @@ export class AuthService {
       throw new ForbiddenException('Quyền truy cập bị từ chối.');
     }
 
-    const isRefreshTokenValid = await bcrypt.compare(refreshToken, user.refreshToken);
+    const isRefreshTokenValid = await bcrypt.compare(
+      refreshToken,
+      user.refreshToken,
+    );
     if (!isRefreshTokenValid) {
       throw new ForbiddenException('Quyền truy cập bị từ chối.');
     }
 
     const tokens = await this.generateTokens(user._id.toString(), user.email);
-    await this.usersService.updateRefreshToken(user._id.toString(), tokens.refreshToken);
+    await this.usersService.updateRefreshToken(
+      user._id.toString(),
+      tokens.refreshToken,
+    );
 
     return tokens;
   }
@@ -103,15 +129,22 @@ export class AuthService {
       this.jwtService.signAsync(
         { sub: userId, email },
         {
-          secret: this.configService.get<string>('JWT_SECRET') || 'musichub_super_secret_key_123!',
-          expiresIn: (this.configService.get<string>('JWT_EXPIRES_IN') || '1d') as any,
+          secret:
+            this.configService.get<string>('JWT_SECRET') ||
+            'musichub_super_secret_key_123!',
+          expiresIn: (this.configService.get<string>('JWT_EXPIRES_IN') ||
+            '1d') as any,
         },
       ),
       this.jwtService.signAsync(
         { sub: userId, email },
         {
-          secret: this.configService.get<string>('JWT_REFRESH_SECRET') || 'musichub_refresh_secret_key_456!',
-          expiresIn: (this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') || '7d') as any,
+          secret:
+            this.configService.get<string>('JWT_REFRESH_SECRET') ||
+            'musichub_refresh_secret_key_456!',
+          expiresIn: (this.configService.get<string>(
+            'JWT_REFRESH_EXPIRES_IN',
+          ) || '7d') as any,
         },
       ),
     ]);

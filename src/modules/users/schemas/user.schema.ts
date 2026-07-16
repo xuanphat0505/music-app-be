@@ -4,7 +4,6 @@ import { Document } from 'mongoose';
 // User Settings Schema
 @Schema({ _id: false })
 export class Settings {
-
   @Prop({ type: Boolean, default: false })
   pushNotifications: boolean;
 
