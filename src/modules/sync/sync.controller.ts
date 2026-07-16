@@ -1,4 +1,10 @@
-import { Controller, HttpException, HttpStatus, Post, Query } from '@nestjs/common';
+import {
+  Controller,
+  HttpException,
+  HttpStatus,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { SyncService } from './sync.service';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 
@@ -20,9 +26,15 @@ export class SyncController {
     const parsedSongsOffset = songsOffset ? parseInt(songsOffset, 10) : 0;
     const parsedAlbumsOffset = albumsOffset ? parseInt(albumsOffset, 10) : 0;
 
-    const songsSuccess = await this.syncService.syncTrendingTracks(parsedSongsLimit, parsedSongsOffset);
-    const albumsSuccess = await this.syncService.syncTrendingAlbums(parsedAlbumsLimit, parsedAlbumsOffset);
-    
+    const songsSuccess = await this.syncService.syncTrendingTracks(
+      parsedSongsLimit,
+      parsedSongsOffset,
+    );
+    const albumsSuccess = await this.syncService.syncTrendingAlbums(
+      parsedAlbumsLimit,
+      parsedAlbumsOffset,
+    );
+
     if (!songsSuccess && !albumsSuccess) {
       throw new HttpException(
         'Đồng bộ dữ liệu nhạc và album thất bại. Vui lòng kiểm tra lại log server.',

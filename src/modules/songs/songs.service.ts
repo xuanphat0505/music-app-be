@@ -31,7 +31,7 @@ export class SongsService {
     // Bộ lọc từ khóa tìm kiếm (Tên bài hát hoặc tên ca sĩ)
     if (q) {
       const searchRegex = new RegExp(q, 'i');
-      
+
       // Bước 1: Tìm tất cả nghệ sĩ khớp từ khóa để lấy danh sách IDs của họ
       const matchedArtists = await this.artistModel
         .find({ name: searchRegex })
@@ -40,10 +40,7 @@ export class SongsService {
       const artistIds = matchedArtists.map((a) => a._id);
 
       // Bước 2: Tạo query tìm kiếm bài hát khớp tên HOẶC thuộc nghệ sĩ khớp tên
-      query.$or = [
-        { title: searchRegex },
-        { artist: { $in: artistIds } },
-      ];
+      query.$or = [{ title: searchRegex }, { artist: { $in: artistIds } }];
     }
 
     // Xử lý tiêu chí sắp xếp
@@ -93,24 +90,26 @@ export class SongsService {
 
   // Lấy danh sách tổng hợp số lượng bài hát theo từng thể loại nhạc
   async getGenresCount() {
-    return this.songModel.aggregate([
-      {
-        $group: {
-          _id: '$genre',
-          count: { $sum: 1 },
+    return this.songModel
+      .aggregate([
+        {
+          $group: {
+            _id: '$genre',
+            count: { $sum: 1 },
+          },
         },
-      },
-      {
-        $project: {
-          genre: '$_id',
-          count: 1,
-          _id: 0,
+        {
+          $project: {
+            genre: '$_id',
+            count: 1,
+            _id: 0,
+          },
         },
-      },
-      {
-        $sort: { count: -1 },
-      },
-    ]).exec();
+        {
+          $sort: { count: -1 },
+        },
+      ])
+      .exec();
   }
 
   // Tìm chi tiết một bài hát theo ID hoặc audiusId
@@ -158,7 +157,9 @@ export class SongsService {
     }
 
     if (!song) {
-      throw new NotFoundException('Không tìm thấy bài hát yêu cầu để tăng lượt nghe.');
+      throw new NotFoundException(
+        'Không tìm thấy bài hát yêu cầu để tăng lượt nghe.',
+      );
     }
     return song;
   }
@@ -175,13 +176,15 @@ export class SongsService {
     }
 
     try {
-      const artistName = (typeof song.artist === 'string'
-        ? song.artist
-        : (song.artist as any).name).trim();
+      const artistName = (
+        typeof song.artist === 'string' ? song.artist : song.artist.name
+      ).trim();
       const trackName = song.title.trim();
       const duration = Math.round(song.duration);
 
-      console.log(`Đang gọi LRCLIB API cho bài hát: "${trackName}" - Nghệ sĩ: "${artistName}" - Thời lượng: ${duration}s`);
+      console.log(
+        `Đang gọi LRCLIB API cho bài hát: "${trackName}" - Nghệ sĩ: "${artistName}" - Thời lượng: ${duration}s`,
+      );
       const response = await axios.get('https://lrclib.net/api/get', {
         params: {
           artist_name: artistName,
@@ -208,7 +211,12 @@ export class SongsService {
         };
       }
     } catch (error: any) {
-      console.error('Lỗi khi gọi LRCLIB API:', error.response?.status === 404 ? 'Không tìm thấy lời bài hát (404)' : error.message);
+      console.error(
+        'Lỗi khi gọi LRCLIB API:',
+        error.response?.status === 404
+          ? 'Không tìm thấy lời bài hát (404)'
+          : error.message,
+      );
     }
 
     return {

@@ -13,7 +13,9 @@ export async function getHealthyNode(): Promise<string> {
   let nodeToReturn = '';
 
   try {
-    const response = await axios.get('https://api.audius.co', { timeout: 5000 });
+    const response = await axios.get('https://api.audius.co', {
+      timeout: 5000,
+    });
     const nodes = response.data?.data;
     if (nodes && nodes.length > 0) {
       nodeToReturn = nodes[Math.floor(Math.random() * nodes.length)];
@@ -21,7 +23,7 @@ export async function getHealthyNode(): Promise<string> {
       lastNodeFetch = now;
       return nodeToReturn;
     }
-  } catch (error) {
+  } catch {
     // Tiếp tục chuyển xuống phương án dự phòng nếu xảy ra lỗi mạng
   }
 
@@ -30,7 +32,8 @@ export async function getHealthyNode(): Promise<string> {
     'https://audius-discovery-1.c-alpha.link',
     'https://audius-metadata-5.figment.io',
   ];
-  nodeToReturn = fallbackNodes[Math.floor(Math.random() * fallbackNodes.length)];
+  nodeToReturn =
+    fallbackNodes[Math.floor(Math.random() * fallbackNodes.length)];
   cachedNode = nodeToReturn;
   lastNodeFetch = now;
   return nodeToReturn;
