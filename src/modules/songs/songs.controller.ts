@@ -47,6 +47,13 @@ export class SongsController {
     return this.songsService.findOne(id);
   }
 
+  // Lấy lời bài hát theo ID hoặc audiusId
+  @Get(':id/lyrics')
+  @ResponseMessage('Lấy lời bài hát thành công.')
+  async getSongLyrics(@Param('id') id: string) {
+    return this.songsService.getLyrics(id);
+  }
+
   // Tăng lượt nghe của bài hát khi phát nhạc
   @Post(':id/play')
   @ResponseMessage('Ghi nhận lượt nghe bài hát thành công.')

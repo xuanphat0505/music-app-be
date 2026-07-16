@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -160,5 +161,59 @@ export class SongsService {
       throw new NotFoundException('Không tìm thấy bài hát yêu cầu để tăng lượt nghe.');
     }
     return song;
+  }
+
+  // Lấy lời bài hát thường và lời bài hát đồng bộ thời gian từ DB hoặc LRCLIB
+  async getLyrics(id: string) {
+    const song = await this.findOne(id);
+
+    if (song.lyrics || song.syncedLyrics) {
+      return {
+        lyrics: song.lyrics,
+        syncedLyrics: song.syncedLyrics,
+      };
+    }
+
+    try {
+      const artistName = (typeof song.artist === 'string'
+        ? song.artist
+        : (song.artist as any).name).trim();
+      const trackName = song.title.trim();
+      const duration = Math.round(song.duration);
+
+      console.log(`Đang gọi LRCLIB API cho bài hát: "${trackName}" - Nghệ sĩ: "${artistName}" - Thời lượng: ${duration}s`);
+      const response = await axios.get('https://lrclib.net/api/get', {
+        params: {
+          artist_name: artistName,
+          track_name: trackName,
+          duration: duration,
+        },
+        headers: {
+          'User-Agent': 'MusicHub/1.0.0 (https://github.com/admin/music-app)',
+        },
+        timeout: 15000,
+      });
+
+      if (response.data) {
+        const plainLyrics = response.data.plainLyrics || '';
+        const syncedLyrics = response.data.syncedLyrics || '';
+
+        song.lyrics = plainLyrics;
+        song.syncedLyrics = syncedLyrics;
+        await song.save();
+
+        return {
+          lyrics: plainLyrics,
+          syncedLyrics: syncedLyrics,
+        };
+      }
+    } catch (error: any) {
+      console.error('Lỗi khi gọi LRCLIB API:', error.response?.status === 404 ? 'Không tìm thấy lời bài hát (404)' : error.message);
+    }
+
+    return {
+      lyrics: '',
+      syncedLyrics: '',
+    };
   }
 }
