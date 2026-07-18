@@ -5,9 +5,9 @@ import { Document } from 'mongoose';
 @Schema({ timestamps: true })
 export class Artist extends Document {
   @Prop({ type: String, required: true, unique: true, index: true })
-  audiusId: string;
+  spotifyId: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String, default: '' })
   username: string;
 
   @Prop({ type: String, required: true, index: true })

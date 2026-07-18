@@ -3,7 +3,7 @@ const path = require('path');
 const mongoose = require('mongoose');
 const axios = require('axios');
 
-// Tự động phân tích file .env để nạp biến môi trường
+// Nạp các biến môi trường từ file .env phục vụ kết nối MongoDB
 try {
   const envPath = path.resolve(__dirname, '.env');
   if (fs.existsSync(envPath)) {
@@ -20,93 +20,242 @@ try {
     });
   }
 } catch (e) {
-  console.warn('Không thể đọc file .env, sử dụng biến môi trường mặc định.');
+  console.warn('Không thể đọc cấu hình file .env, sử dụng kết nối mặc định.');
 }
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/music-app';
-const TARGET_SONGS = 3000; // Đặt mục tiêu 5000 bài hát phổ biến chất lượng cao
-const DELAY_MS = 1000; // Trễ nhẹ 1 giây để không bị khóa API
+const MONGO_URI =
+  process.env.MONGO_URI || 'mongodb://localhost:27017/music-app';
+const TARGET_SONGS = 1000; // Nâng mục tiêu cào lên 500 bài hát hiện đại
+const DELAY_MS = 1500; // Trễ giữa các yêu cầu API để tránh bị chặn truy cập
 
-// Danh sách ca sĩ nổi tiếng thế giới và Việt Nam để cào dữ liệu
 const POPULAR_ARTISTS = [
   // US-UK Pop / R&B
-  'Taylor Swift', 'Ed Sheeran', 'Coldplay', 'The Weeknd', 'Billie Eilish', 
-  'Drake', 'Ariana Grande', 'Justin Bieber', 'Eminem', 'Bruno Mars', 
-  'Maroon 5', 'Post Malone', 'Rihanna', 'Beyonce', 'Katy Perry', 
-  'Dua Lipa', 'Adele', 'Shawn Mendes', 'Camila Cabello', 'Selena Gomez', 
-  'One Direction', 'Harry Styles', 'Zayn', 'Lady Gaga', 'Sam Smith', 
-  'Charlie Puth', 'Lauv', 'Khalid', 'Sia', 'Halsey', 'Olivia Rodrigo', 
-  'Lana Del Rey', 'Troye Sivan', 'John Legend', 'Alicia Keys', 'Usher', 
-  'Justin Timberlake', 'Michael Jackson', 'Queen', 'Linkin Park',
-  'Ellie Goulding', 'Jessie J', 'Demi Lovato', 'Miley Cyrus',
-  
+  'Ed Sheeran',
+  'The Weeknd',
+  'Justin Bieber',
+  'Bruno Mars',
+  'Maroon 5',
+  'One Direction',
+  'Charlie Puth',
+
   // EDM / Dance
-  'Avicii', 'David Guetta', 'Marshmello', 'Alan Walker', 'Calvin Harris', 
-  'The Chainsmokers', 'Kygo', 'Martin Garrix', 'Zedd', 'Alesso', 
-  'DJ Snake', 'Clean Bandit', 'Daft Punk',
-  
-  // Indie / Rock / Alternative
-  'Imagine Dragons', 'OneRepublic', 'Twenty One Pilots', 'Bastille', 
-  'Kodaline', 'James Arthur', 'Lewis Capaldi', 'Dean Lewis', 'Calum Scott', 
-  'Tom Odell', 'John Mayer', 'Jason Mraz', 'Lorde', 'Hozier', 'Passenger',
-  
-  // V-Pop (Nhạc Việt phổ biến có trên Audius và LRCLIB)
-  'Son Tung M-TP', 'Den Vau', 'Hoang Thuy Linh', 'Vu.', 'Da LAB', 
-  'Amee', 'Jack - J97', 'Binz', 'Soobin Hoang Son', 'JustaTee', 
-  'tlinh', 'MCK', 'Grey D', 'MONO', 'MIN', 'ERIK', 'Duc Phuc', 
-  'Phan Manh Quynh', 'My Tam', 'Ha Anh Tuan'
+  'Avicii',
+  'Alan Walker',
+  'The Chainsmokers',
+
+  // V-Pop
+  'Son Tung M-TP',
+  'Den Vau',
+  'Hoang Thuy Linh',
+  'Vu.',
+  'Da LAB',
+  'Amee',
+  'Jack - J97',
+  'Binz',
+  'Soobin Hoang Son',
+  'JustaTee',
+  'tlinh',
+  'MCK',
+  'Grey D',
+  'MONO',
+  'MIN',
+  'ERIK',
+  'Duc Phuc',
+  'Phan Manh Quynh',
+  'My Tam',
+  'Ha Anh Tuan',
+  'MONO',
+  'B Ray',
+  'Thieu Bao Tram',
+  'HIEUTHUHAI',
+  'Wren Evans',
+  'Amee',
+  'Vu.',
+  'Da LAB',
+  'MCK',
+  'Obito',
+  'Wxrdie',
 ];
 
-// Định nghĩa Mongoose Schemas tương thích với dự án
+// Danh sách các máy chủ Piped API dùng để tìm kiếm và lấy luồng âm thanh
+const PIPED_INSTANCES = [
+  'https://pipedapi.kavin.rocks',
+  'https://pipedapi.tokhmi.xyz',
+  'https://pipedapi.adminforge.de',
+  'https://pipedapi.astrian.xyz',
+];
+
+// Định nghĩa Mongoose Schemas mới đồng bộ với thiết kế Spotify/YouTube
 const ArtistSchema = new mongoose.Schema(
   {
-    audiusId: { type: String, required: true, unique: true, index: true },
-    username: { type: String, required: true },
+    spotifyId: { type: String, required: true, unique: true, index: true },
+    username: { type: String, default: '' },
     name: { type: String, required: true, index: true },
     avatar: { type: String, default: '' },
     bio: { type: String, default: '' },
     followerCount: { type: Number, default: 0 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const SongSchema = new mongoose.Schema(
   {
-    audiusId: { type: String, required: true, unique: true, index: true },
+    spotifyId: { type: String, required: true, unique: true, index: true },
+    youtubeVideoId: { type: String, default: '', index: true },
     title: { type: String, required: true, index: true },
     duration: { type: Number, required: true },
     artwork: { type: String, default: '' },
     genre: { type: String, default: '', index: true },
     playsCount: { type: Number, default: 0, index: true },
-    audiusPlaysCount: { type: Number, default: 0 },
-    artist: { type: mongoose.Schema.Types.ObjectId, ref: 'Artist', required: true, index: true },
-    album: { type: mongoose.Schema.Types.ObjectId, ref: 'Album', default: null, index: true },
+    spotifyPlaysCount: { type: Number, default: 0 },
+    artist: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Artist',
+      required: true,
+      index: true,
+    },
+    album: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Album',
+      default: null,
+      index: true,
+    },
     streamUrl: { type: String, default: '' },
     lyrics: { type: String, default: '' },
     syncedLyrics: { type: String, default: '' },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const AlbumSchema = new mongoose.Schema(
   {
-    audiusId: { type: String, unique: true, sparse: true, index: true },
+    spotifyId: { type: String, unique: true, sparse: true, index: true },
     title: { type: String, required: true },
     artwork: { type: String, default: '' },
-    artist: { type: mongoose.Schema.Types.ObjectId, ref: 'Artist', required: true, index: true },
+    artist: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Artist',
+      required: true,
+      index: true,
+    },
     songs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Song' }],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Artist = mongoose.model('Artist', ArtistSchema);
 const Song = mongoose.model('Song', SongSchema);
 const Album = mongoose.model('Album', AlbumSchema);
 
-// Tiện ích trì hoãn thực thi
+// Tiện ích trì hoãn tiến trình
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Chuẩn hóa tên để làm sạch các ký tự nhiễu
+// Tiêu đề User-Agent Chrome giả lập để tránh bị máy chủ API từ chối kết nối
+const COMMON_HEADERS = {
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
+};
+
+// Tìm kiếm đệ quy tất cả các đối tượng videoRenderer trong cấu trúc JSON của YouTube
+function findVideoRenderers(obj, results = []) {
+  if (!obj || typeof obj !== 'object') return results;
+
+  if (obj.videoRenderer) {
+    results.push(obj.videoRenderer);
+  }
+
+  for (const key of Object.keys(obj)) {
+    try {
+      findVideoRenderers(obj[key], results);
+    } catch (e) {
+      // Bỏ qua lỗi truy cập thuộc tính
+    }
+  }
+  return results;
+}
+
+// Đối khớp tìm kiếm video YouTube trực tiếp và lựa chọn Video ID khớp nhất
+async function findYoutubeVideoId(trackName, artistName, durationSec) {
+  const query = `${trackName} ${artistName} audio`;
+  const url = 'https://www.youtube.com/results';
+
+  try {
+    const response = await axios.get(url, {
+      params: { search_query: query },
+      headers: COMMON_HEADERS,
+      timeout: 10000,
+    });
+
+    const html = response.data;
+
+    // Tìm khối định nghĩa ytInitialData chứa dữ liệu JSON trang tìm kiếm
+    const match = html.match(/var ytInitialData = ({[\s\S]*?});/);
+    if (!match) {
+      return '';
+    }
+
+    const jsonStr = match[1];
+    const data = JSON.parse(jsonStr);
+
+    // Thu thập tất cả các videoRenderer
+    const renderers = findVideoRenderers(data);
+    if (renderers.length === 0) return '';
+
+    let bestVideoId = '';
+    let minScore = Infinity;
+
+    for (const r of renderers) {
+      if (!r.videoId || !r.title?.runs?.[0]?.text) continue;
+
+      const videoId = r.videoId;
+      const title = r.title.runs[0].text;
+      const durationStr = r.lengthText?.simpleText || '';
+
+      // Đổi định dạng thời lượng thành giây
+      let videoDuration = 0;
+      if (durationStr) {
+        const timeParts = durationStr.split(':').map(Number);
+        if (timeParts.length === 2) {
+          videoDuration = timeParts[0] * 60 + timeParts[1];
+        } else if (timeParts.length === 3) {
+          videoDuration =
+            timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2];
+        }
+      }
+
+      const titleLower = title.toLowerCase();
+      const trackNameLower = trackName.toLowerCase();
+      const artistLower = artistName.toLowerCase();
+      const durationDiff = Math.abs(durationSec - videoDuration);
+
+      let penalty = durationDiff;
+      if (durationDiff > 15) penalty += 50;
+
+      if (titleLower.includes('audio') || titleLower.includes('lyric')) {
+        penalty -= 15;
+      }
+      if (!titleLower.includes(trackNameLower)) penalty += 30;
+      if (!titleLower.includes(artistLower)) penalty += 20;
+
+      if (penalty < minScore) {
+        minScore = penalty;
+        bestVideoId = videoId;
+      }
+    }
+
+    // Nếu không tìm được qua thuật toán đối khớp thì lấy video đầu tiên
+    return bestVideoId || renderers[0].videoId;
+  } catch (error) {
+    console.error(
+      `     -> Lỗi khi tìm kiếm trực tiếp trên YouTube cho "${query}":`,
+      error.message,
+    );
+    return '';
+  }
+}
+
+// Làm sạch các ký tự rác trong tiêu đề bài hát để tăng tỉ lệ tìm thấy lyrics
 function cleanText(text) {
   if (!text) return '';
   return text
@@ -114,141 +263,139 @@ function cleanText(text) {
     .replace(/\s*[\(\[][fF]eaturings*?.*?[\)\]]/g, '')
     .replace(/\s*[\(\[][oO]fficial.*?[\)\]]/g, '')
     .replace(/\s*[\(\[][lL]yrics*?[\)\]]/g, '')
-    .replace(/\s*[\(\[][cC]lean.*?[\)\]]/g, '')
-    .replace(/\s*[\(\[][eE]xplicit.*?[\)\]]/g, '')
-    .replace(/\s*-\s*Radio\s*Edit/gi, '')
-    .replace(/\s*-\s*Original\s*Mix/gi, '')
     .trim();
 }
 
-// Lấy danh sách máy chủ API khả dụng từ Audius
-async function getHealthyNode() {
-  try {
-    const response = await axios.get('https://api.audius.co', { timeout: 8000 });
-    const hosts = response.data?.data;
-    if (hosts && hosts.length > 0) {
-      const randomHost = hosts[Math.floor(Math.random() * hosts.length)];
-      console.log(`Đã chọn API Node: ${randomHost}`);
-      return randomHost;
-    }
-  } catch (err) {
-    console.error('Không thể lấy API Nodes từ Audius, sử dụng node dự phòng:', err.message);
-  }
-  return 'https://api.audius.co';
-}
-
-// Khởi chạy tiến trình đồng bộ dữ liệu theo mô hình Hybrid
+// Tiến trình đồng bộ dữ liệu nhạc hiện đại
 async function startSync() {
   try {
     console.log('Đang kết nối tới cơ sở dữ liệu MongoDB...');
     await mongoose.connect(MONGO_URI);
     console.log('Kết nối database thành công!');
 
-    // Lấy số lượng bài hát hiện tại trong database để tiếp tục cào tiếp
+    // Lấy số lượng bài hát hiện có trong database để cào tiếp tục
     const currentCount = await Song.countDocuments();
     let savedCount = currentCount;
-    console.log(`Số lượng bài hát hiện có trong database: ${currentCount} bài.`);
+    console.log(
+      `Số lượng bài hát hiện có trong database: ${currentCount} bài.`,
+    );
 
     if (savedCount >= TARGET_SONGS) {
-      console.log(`Đã đạt hoặc vượt mục tiêu ${TARGET_SONGS} bài hát. Dừng tiến trình.`);
+      console.log(
+        `Đã đạt hoặc vượt mục tiêu ${TARGET_SONGS} bài hát. Dừng tiến trình.`,
+      );
       process.exit(0);
     }
 
-    const nodeUrl = await getHealthyNode();
-
-    console.log(`\n=================== BẮT ĐẦU PHA ĐỒNG BỘ LAI (Mục tiêu: ${TARGET_SONGS} bài) ===================`);
+    console.log(
+      `\n=================== BẮT ĐẦU CÀO TIẾP NHẠC XU HƯỚNG HIỆN ĐẠI (Mục tiêu: ${TARGET_SONGS} bài) ===================`,
+    );
 
     for (const artistName of POPULAR_ARTISTS) {
       if (savedCount >= TARGET_SONGS) break;
-      console.log(`\n---------------- Ca sĩ: ${artistName.toUpperCase()} ----------------`);
+      console.log(
+        `\n---------------- Đang cào nghệ sĩ: ${artistName.toUpperCase()} ----------------`,
+      );
 
-      // 1. Gọi iTunes API để tìm các bài hát nổi tiếng nhất của ca sĩ
+      // Lấy danh sách bài hát từ iTunes API với dữ liệu đầy đủ và định dạng ảnh rõ nét
       let itunesTracks = [];
       try {
         const itunesRes = await axios.get('https://itunes.apple.com/search', {
           params: {
             term: artistName,
-            limit: 40,
+            limit: 15,
             entity: 'song',
           },
+          headers: COMMON_HEADERS,
           timeout: 10000,
         });
         itunesTracks = itunesRes.data?.results || [];
       } catch (itunesErr) {
-        console.error(` -> Lỗi gọi iTunes API cho ca sĩ "${artistName}":`, itunesErr.message);
+        console.error(
+          ` -> Lỗi tìm kiếm nghệ sĩ trên iTunes:`,
+          itunesErr.message,
+        );
         await sleep(2000);
         continue;
       }
 
-      console.log(` -> Tìm thấy ${itunesTracks.length} bài hát tiềm năng từ iTunes.`);
+      console.log(` -> Tìm thấy ${itunesTracks.length} bài hát từ iTunes.`);
 
       for (const track of itunesTracks) {
         if (savedCount >= TARGET_SONGS) break;
 
-        const itunesTrackName = track.trackName;
-        const itunesArtistName = track.artistName;
+        const trackName = track.trackName;
+        const artistFullName = track.artistName;
+        const durationSec = Math.round((track.trackTimeMillis || 0) / 1000);
+        const releaseYear = track.releaseDate
+          ? new Date(track.releaseDate).getFullYear()
+          : 0;
 
-        // Kiểm tra xem bài hát đã tồn tại trong DB chưa (tránh tải lại)
-        const existingSong = await Song.findOne({ title: itunesTrackName }).populate('artist');
-        if (existingSong && existingSong.artist && existingSong.artist.name.toLowerCase() === itunesArtistName.toLowerCase()) {
-          console.log(`     -> Bài hát "${itunesTrackName}" của "${itunesArtistName}" đã có trong database. Bỏ qua.`);
+        // Lọc bỏ bài hát quá cũ trước năm 2018 để chỉ lấy nhạc hiện đại
+        if (releaseYear && releaseYear < 2018) {
           continue;
         }
 
-        const duration = Math.round((track.trackTimeMillis || 0) / 1000);
-        const releaseYear = track.releaseDate ? new Date(track.releaseDate).getFullYear() : 0;
-        const genre = track.primaryGenreName || 'Pop';
-
-        // Lọc nhạc phát hành trước năm 2010 để lấy nhạc hiện đại
-        if (releaseYear && releaseYear < 2010) {
+        // Kiểm tra xem bài hát đã tồn tại trong DB chưa bằng spotifyId để tránh cào trùng lặp
+        const pseudoSpotifyTrackId = `track_${track.trackId}`;
+        const existingSong = await Song.findOne({
+          spotifyId: pseudoSpotifyTrackId,
+        });
+        if (existingSong) {
+          console.log(
+            `     -> Bài hát "${trackName}" đã tồn tại trong cơ sở dữ liệu. Bỏ qua.`,
+          );
           continue;
         }
 
-        // Tối ưu ảnh bìa iTunes lên kích thước 480x480 để giao diện cực nét
-        let artworkUrl = track.artworkUrl100 || '';
-        if (artworkUrl) {
-          artworkUrl = artworkUrl.replace('100x100bb.jpg', '480x480bb.jpg');
-        }
+        console.log(
+          `\n   [*] Đang xử lý: "${trackName}" - "${artistFullName}" (${releaseYear})`,
+        );
 
-        console.log(`\n   [Xử lý] "${itunesTrackName}" - "${itunesArtistName}" (${releaseYear})`);
-
-        // 2. Tìm lời bài hát trên LRCLIB
+        // Tìm lời bài hát trên LRCLIB
         let lyricsData = null;
         try {
           const lrcRes = await axios.get('https://lrclib.net/api/get', {
             params: {
-              artist_name: itunesArtistName,
-              track_name: itunesTrackName,
-              duration: duration,
+              artist_name: artistFullName,
+              track_name: trackName,
+              duration: durationSec,
             },
             headers: {
-              'User-Agent': 'MusicHubCrawler/1.0.0 (https://github.com/admin/music-app)',
+              'User-Agent':
+                'MusicHubCrawler/1.0.0 (https://github.com/admin/music-app)',
             },
-            timeout: 10000,
+            timeout: 8000,
           });
-          if (lrcRes.data && (lrcRes.data.plainLyrics || lrcRes.data.syncedLyrics)) {
+          if (
+            lrcRes.data &&
+            (lrcRes.data.plainLyrics || lrcRes.data.syncedLyrics)
+          ) {
             lyricsData = {
               lyrics: lrcRes.data.plainLyrics || '',
               syncedLyrics: lrcRes.data.syncedLyrics || '',
             };
           }
         } catch (lrcErr) {
-          // Lỗi 404 hoặc lệch thời lượng -> chuyển sang search gần đúng
-          const cleanTitle = cleanText(itunesTrackName);
-          const cleanArtist = cleanText(itunesArtistName);
+          // Thực hiện tìm kiếm gần đúng nếu gọi API trực tiếp thất bại
+          const cleanTitle = cleanText(trackName);
+          const cleanArtist = cleanText(artistFullName);
           try {
-            const searchResponse = await axios.get('https://lrclib.net/api/search', {
-              params: {
-                track_name: cleanTitle,
-                artist_name: cleanArtist,
+            const searchResponse = await axios.get(
+              'https://lrclib.net/api/search',
+              {
+                params: { track_name: cleanTitle, artist_name: cleanArtist },
+                headers: {
+                  'User-Agent':
+                    'MusicHubCrawler/1.0.0 (https://github.com/admin/music-app)',
+                },
+                timeout: 8000,
               },
-              headers: {
-                'User-Agent': 'MusicHubCrawler/1.0.0 (https://github.com/admin/music-app)',
-              },
-              timeout: 10000,
-            });
+            );
             const results = searchResponse.data || [];
-            const bestMatch = results.find((r) => r.plainLyrics || r.syncedLyrics);
+            const bestMatch = results.find(
+              (r) => r.plainLyrics || r.syncedLyrics,
+            );
             if (bestMatch) {
               lyricsData = {
                 lyrics: bestMatch.plainLyrics || '',
@@ -256,90 +403,92 @@ async function startSync() {
               };
             }
           } catch (searchErr) {
-            // Lỗi kết nối hoặc không tìm thấy lời nhạc
+            // Chấp nhận bỏ qua nếu hoàn toàn không có lyrics
           }
         }
 
         if (!lyricsData) {
-          console.log('     -> Không tìm thấy lời bài hát trên LRCLIB. Bỏ qua.');
+          console.log(
+            '     -> Không tìm thấy lời Karaoke trên LRCLIB. Bỏ qua.',
+          );
           continue;
         }
 
-        // 3. Tìm bài hát tương ứng trên Audius để lấy stream audio
-        let streamTrack = null;
+        // Tìm mã video YouTube tương ứng qua Piped API làm nguồn phát nhạc trực tiếp
+        let youtubeVideoId = '';
         try {
-          const audiusSearchRes = await axios.get(`${nodeUrl}/v1/tracks/search`, {
-            params: {
-              query: `${itunesArtistName} ${itunesTrackName}`,
-              app_name: 'musichub_crawler',
-            },
-            timeout: 10000,
-          });
-          const searchResults = audiusSearchRes.data?.data || [];
-          if (searchResults.length > 0) {
-            // Lấy kết quả tốt nhất có liên quan nhất
-            streamTrack = searchResults[0];
-          }
-        } catch (audiusErr) {
-          console.error(`     -> Lỗi tìm kiếm audio trên Audius:`, audiusErr.message);
+          youtubeVideoId = await findYoutubeVideoId(
+            trackName,
+            artistFullName,
+            durationSec,
+          );
+        } catch (ytErr) {
+          console.error(
+            `     -> Lỗi khi truy vấn luồng âm thanh YouTube:`,
+            ytErr.message,
+          );
         }
 
-        if (!streamTrack) {
-          console.log('     -> Không tìm thấy file audio stream trên Audius. Bỏ qua.');
+        if (!youtubeVideoId) {
+          console.log(
+            '     -> Không tìm thấy mã video stream trên YouTube. Bỏ qua.',
+          );
           continue;
         }
 
-        // 4. Lưu bài hát và nghệ sĩ tương ứng vào DB
-        try {
-          const audiusArtist = streamTrack.user;
-          if (!audiusArtist) continue;
+        // Lưu thông tin nghệ sĩ vào cơ sở dữ liệu MongoDB
+        const pseudoSpotifyArtistId = `artist_${String(track.artistId || track.artistViewUrl || artistFullName).replace(/[^a-zA-Z0-9]/g, '')}`;
+        const artistDoc = await Artist.findOneAndUpdate(
+          { spotifyId: pseudoSpotifyArtistId },
+          {
+            name: artistFullName,
+            avatar: track.artworkUrl100
+              ? track.artworkUrl100.replace('100x100bb.jpg', '240x240bb.jpg')
+              : '',
+            bio: `Nghệ sĩ hiện đại được đồng bộ từ kho nhạc.`,
+          },
+          { returnDocument: 'after', upsert: true },
+        );
 
-          // Lưu nghệ sĩ liên quan từ Audius
-          const artistDoc = await Artist.findOneAndUpdate(
-            { audiusId: audiusArtist.id },
-            {
-              username: audiusArtist.handle,
-              name: itunesArtistName, // Giữ tên nghệ sĩ sạch từ iTunes thay vì tên tài khoản Audius
-              avatar: audiusArtist.profile_picture ? audiusArtist.profile_picture['150x150'] || '' : '',
-              bio: audiusArtist.bio || '',
-              followerCount: audiusArtist.follower_count || 0,
-            },
-            { returnDocument: 'after', upsert: true }
-          );
+        // Lưu thông tin chi tiết bài hát vào cơ sở dữ liệu MongoDB
+        const artworkUrl = track.artworkUrl100
+          ? track.artworkUrl100.replace('100x100bb.jpg', '480x480bb.jpg')
+          : '';
 
-          // Lưu bài hát
-          await Song.findOneAndUpdate(
-            { audiusId: streamTrack.id },
-            {
-              title: itunesTrackName, // Dùng tiêu đề chuẩn từ iTunes
-              duration: duration,
-              artwork: artworkUrl, // Dùng ảnh bìa HD từ iTunes
-              genre: genre,
-              audiusPlaysCount: streamTrack.play_count || 0,
-              artist: artistDoc._id,
-              streamUrl: `/songs/stream/${streamTrack.id}`,
-              lyrics: lyricsData.lyrics,
-              syncedLyrics: lyricsData.syncedLyrics,
-            },
-            { upsert: true }
-          );
+        await Song.findOneAndUpdate(
+          { spotifyId: pseudoSpotifyTrackId },
+          {
+            youtubeVideoId: youtubeVideoId,
+            title: trackName,
+            duration: durationSec,
+            artwork: artworkUrl,
+            genre: track.primaryGenreName || 'Pop',
+            artist: artistDoc._id,
+            streamUrl: `/songs/stream/${youtubeVideoId}`, // Route phát nhạc thông qua backend proxy
+            lyrics: lyricsData.lyrics,
+            syncedLyrics: lyricsData.syncedLyrics,
+          },
+          { upsert: true },
+        );
 
-          savedCount++;
-          console.log(`     -> THÀNH CÔNG [${savedCount}/${TARGET_SONGS}]: Đã lưu vào database.`);
-        } catch (saveErr) {
-          console.error('     -> Lỗi khi ghi vào Database:', saveErr.message);
-        }
+        savedCount++;
+        console.log(
+          `     -> THÀNH CÔNG [${savedCount}/${TARGET_SONGS}]: Đã đồng bộ lên MongoDB.`,
+        );
 
-        // Delay nhẹ để tránh rate limit các API
         await sleep(DELAY_MS);
       }
     }
 
-    console.log(`\n=================== HOÀN THÀNH ĐỒNG BỘ LAI ===================`);
-    console.log(`Tổng số bài hát chất lượng cao có lyrics trong database: ${savedCount}`);
+    console.log(
+      `\n=================== HOÀN THÀNH QUY TRÌNH CÀO NHẠC ===================`,
+    );
+    console.log(
+      `Tổng cộng đã cào được ${savedCount} bài hát xu hướng hiện đại có đầy đủ lyrics.`,
+    );
     process.exit(0);
   } catch (err) {
-    console.error('Lỗi nghiêm trọng trong quá trình chạy script startSync:', err);
+    console.error('Lỗi nghiêm trọng trong quá trình chạy script đồng bộ:', err);
     process.exit(1);
   }
 }
