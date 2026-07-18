@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import axios from 'axios';
 import { Artist } from '@/modules/artists/schemas/artist.schema';
 import { Song } from '@/modules/songs/schemas/song.schema';
@@ -42,7 +42,7 @@ const POPULAR_ARTISTS = [
   'HIEUTHUHAI',
   'Wren Evans',
   'Obito',
-  'Wxrdie'
+  'Wxrdie',
 ];
 
 @Injectable()
@@ -76,7 +76,7 @@ export class SyncService {
     for (const key of Object.keys(obj)) {
       try {
         this.findVideoRenderers(obj[key], results);
-      } catch (e) {
+      } catch {
         // Bỏ qua lỗi truy cập thuộc tính
       }
     }
@@ -125,9 +125,7 @@ export class SyncService {
           ''
         ).toLowerCase();
         const durationText =
-          video.lengthText.runs?.[0]?.text ||
-          video.lengthText.simpleText ||
-          '';
+          video.lengthText.runs?.[0]?.text || video.lengthText.simpleText || '';
 
         let videoDuration = 0;
         const timeParts = durationText.split(':').map(Number);
@@ -146,7 +144,11 @@ export class SyncService {
         }
 
         const cleanTitle = videoTitle.toLowerCase();
-        if (cleanTitle.includes('karaoke') || cleanTitle.includes('instrumental') || cleanTitle.includes('beat')) {
+        if (
+          cleanTitle.includes('karaoke') ||
+          cleanTitle.includes('instrumental') ||
+          cleanTitle.includes('beat')
+        ) {
           penalty += 200;
         }
 
@@ -177,10 +179,14 @@ export class SyncService {
   async syncTrendingTracks(limit = 100, offset = 0): Promise<boolean> {
     try {
       const currentCount = await this.songModel.countDocuments();
-      this.logger.log(`Số lượng bài hát hiện có trong database: ${currentCount} bài.`);
+      this.logger.log(
+        `Số lượng bài hát hiện có trong database: ${currentCount} bài. Bắt đầu từ offset: ${offset}`,
+      );
 
       if (currentCount >= limit) {
-        this.logger.log(`Đã đạt hoặc vượt mục tiêu ${limit} bài hát. Dừng tiến trình.`);
+        this.logger.log(
+          `Đã đạt hoặc vượt mục tiêu ${limit} bài hát. Dừng tiến trình.`,
+        );
         return true;
       }
 
@@ -275,7 +281,7 @@ export class SyncService {
                 syncedLyrics: lrcRes.data.syncedLyrics || '',
               };
             }
-          } catch (lrcErr) {
+          } catch {
             // Chấp nhận và bỏ qua nếu lỗi trực tiếp
           }
 
@@ -304,7 +310,7 @@ export class SyncService {
                   syncedLyrics: bestMatch.syncedLyrics || '',
                 };
               }
-            } catch (searchErr) {
+            } catch {
               // Chấp nhận bỏ qua nếu lỗi tìm kiếm
             }
           }
@@ -393,7 +399,10 @@ export class SyncService {
 
   // Phương thức đồng bộ Album (hiện tại không được hỗ trợ trong kiến trúc mới)
   async syncTrendingAlbums(limit = 10, offset = 0): Promise<boolean> {
-    this.logger.warn('Đồng bộ Album không được hỗ trợ trong kiến trúc Spotify/YouTube mới.');
+    this.logger.warn(
+      `Đồng bộ Album không được hỗ trợ trong kiến trúc Spotify/YouTube mới. Giới hạn: ${limit}, Phân trang: ${offset}`,
+    );
+    await Promise.resolve();
     return true;
   }
 }

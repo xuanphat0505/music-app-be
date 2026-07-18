@@ -86,7 +86,7 @@ export class SongsController {
         if (bestStream && bestStream.url) {
           return res.redirect(bestStream.url);
         }
-      } catch (err) {
+      } catch {
         // Bỏ qua lỗi và tiếp tục thử với instance tiếp theo
       }
     }
