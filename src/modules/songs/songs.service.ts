@@ -140,7 +140,11 @@ export class SongsService {
     let song;
     if (Types.ObjectId.isValid(id)) {
       song = await this.songModel
-        .findByIdAndUpdate(id, { $inc: { playsCount: 1 } }, { new: true })
+        .findByIdAndUpdate(
+          id,
+          { $inc: { playsCount: 1 } },
+          { returnDocument: 'after' },
+        )
         .populate('artist')
         .populate('album')
         .exec();
@@ -149,7 +153,7 @@ export class SongsService {
         .findOneAndUpdate(
           { spotifyId: id },
           { $inc: { playsCount: 1 } },
-          { new: true },
+          { returnDocument: 'after' },
         )
         .populate('artist')
         .populate('album')
