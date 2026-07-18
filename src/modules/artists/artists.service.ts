@@ -46,13 +46,13 @@ export class ArtistsService {
     };
   }
 
-  // Lấy chi tiết nghệ sĩ theo ID hoặc audiusId
+  // Lấy chi tiết nghệ sĩ theo ID hoặc spotifyId
   async findOne(id: string) {
     let artist;
     if (Types.ObjectId.isValid(id)) {
       artist = await this.artistModel.findById(id).exec();
     } else {
-      artist = await this.artistModel.findOne({ audiusId: id }).exec();
+      artist = await this.artistModel.findOne({ spotifyId: id }).exec();
     }
 
     if (!artist) {

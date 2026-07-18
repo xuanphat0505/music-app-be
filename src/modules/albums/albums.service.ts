@@ -58,7 +58,7 @@ export class AlbumsService {
         .exec();
     } else {
       album = await this.albumModel
-        .findOne({ audiusId: id })
+        .findOne({ spotifyId: id })
         .populate('artist')
         .populate({
           path: 'songs',

@@ -7,7 +7,7 @@ import { Song } from '@/modules/songs/schemas/song.schema';
 @Schema({ timestamps: true })
 export class Album extends Document {
   @Prop({ type: String, unique: true, sparse: true, index: true })
-  audiusId?: string;
+  spotifyId?: string;
 
   @Prop({ type: String, required: true })
   title: string;

@@ -77,11 +77,11 @@ export class SongsService {
     };
   }
 
-  // Lấy các bài hát thịnh hành nhất dựa theo lượt nghe playsCount hoặc audiusPlaysCount
+  // Lấy các bài hát thịnh hành nhất dựa theo lượt nghe playsCount hoặc spotifyPlaysCount
   async findTrending(limit = 10) {
     return this.songModel
       .find()
-      .sort({ playsCount: -1, audiusPlaysCount: -1 })
+      .sort({ playsCount: -1, spotifyPlaysCount: -1 })
       .limit(limit)
       .populate('artist')
       .populate('album')
@@ -112,7 +112,7 @@ export class SongsService {
       .exec();
   }
 
-  // Tìm chi tiết một bài hát theo ID hoặc audiusId
+  // Tìm chi tiết một bài hát theo ID hoặc spotifyId
   async findOne(id: string) {
     let song;
     if (Types.ObjectId.isValid(id)) {
@@ -123,7 +123,7 @@ export class SongsService {
         .exec();
     } else {
       song = await this.songModel
-        .findOne({ audiusId: id })
+        .findOne({ spotifyId: id })
         .populate('artist')
         .populate('album')
         .exec();
@@ -147,7 +147,7 @@ export class SongsService {
     } else {
       song = await this.songModel
         .findOneAndUpdate(
-          { audiusId: id },
+          { spotifyId: id },
           { $inc: { playsCount: 1 } },
           { new: true },
         )

@@ -7,7 +7,10 @@ import { Album } from '@/modules/albums/schemas/album.schema';
 @Schema({ timestamps: true })
 export class Song extends Document {
   @Prop({ type: String, required: true, unique: true, index: true })
-  audiusId: string;
+  spotifyId: string;
+
+  @Prop({ type: String, default: '', index: true })
+  youtubeVideoId: string;
 
   @Prop({ type: String, required: true, index: true })
   title: string;
@@ -25,7 +28,7 @@ export class Song extends Document {
   playsCount: number;
 
   @Prop({ type: Number, default: 0 })
-  audiusPlaysCount: number;
+  spotifyPlaysCount: number;
 
   @Prop({ type: Types.ObjectId, ref: 'Artist', required: true, index: true })
   artist: Types.ObjectId | Artist;
