@@ -56,39 +56,60 @@ export class SongsController {
   }
 
   // Tăng lượt nghe của bài hát khi phát nhạc
+  @UseGuards(JwtAuthGuard)
   @Post(':id/play')
   @ResponseMessage('Ghi nhận lượt nghe bài hát thành công.')
   async playSong(@Param('id') id: string) {
     return this.songsService.incrementPlays(id);
   }
 
-  // Tuyến đường redirect trung gian (stream proxy) tự động định tuyến tới máy chủ stream YouTube khả dụng nhất qua Piped API
+  // Tuyến đường redirect trung gian (stream proxy) tự động định tuyến tới máy chủ stream YouTube khả dụng nhất qua Invidious API
   @Get('stream/:id')
   async streamSong(@Param('id') youtubeVideoId: string, @Res() res: any) {
-    const pipedInstances = [
-      'https://pipedapi.kavin.rocks',
-      'https://api.piped.yt',
-      'https://piped-api.lunar.icu',
-      'https://pipedapi.col1a.de',
+    const invidiousInstances = [
+      'https://invidious.f5.si',
+      'https://invidious.tiekoetter.com',
+      'https://invidious.nerdvpn.de',
+      'https://inv.nadeko.net',
+      'https://yewtu.be',
     ];
 
-    for (const instance of pipedInstances) {
+    // Thử danh sách các Invidious instance có sẵn
+    for (const instance of invidiousInstances) {
       try {
-        const response = await axios.get(
-          `${instance}/streams/${youtubeVideoId}`,
-          { timeout: 4000 },
-        );
-        const audioStreams = response.data?.audioStreams || [];
-        const bestStream = audioStreams.reduce((prev, current) => {
-          return (prev.bitrate || 0) > (current.bitrate || 0) ? prev : current;
-        }, audioStreams[0]);
-
-        if (bestStream && bestStream.url) {
-          return res.redirect(bestStream.url);
+        const streamUrl = `${instance}/latest_version?id=${youtubeVideoId}&itag=140&local=true`;
+        // Kiểm tra xem instance này có đang hoạt động tốt bằng cách gửi request HEAD nhanh
+        const response = await axios.head(streamUrl, { timeout: 2500 });
+        if (response.status === 200 || response.status === 206) {
+          return res.redirect(streamUrl);
         }
       } catch {
-        // Bỏ qua lỗi và tiếp tục thử với instance tiếp theo
+        // Bỏ qua lỗi và thử instance tiếp theo
       }
+    }
+
+    // Fallback: Lấy động danh sách instance từ api.invidious.io nếu toàn bộ danh sách tĩnh bị lỗi
+    try {
+      const instancesRes = await axios.get('https://api.invidious.io/instances.json', { timeout: 3000 });
+      const instances = instancesRes.data || [];
+      const dynamicInstances = instances
+        .filter(([_, meta]) => meta.type === 'https' && meta.uri)
+        .map(([_, meta]) => meta.uri)
+        .slice(0, 10);
+
+      for (const instance of dynamicInstances) {
+        try {
+          const streamUrl = `${instance}/latest_version?id=${youtubeVideoId}&itag=140&local=true`;
+          const response = await axios.head(streamUrl, { timeout: 2500 });
+          if (response.status === 200 || response.status === 206) {
+            return res.redirect(streamUrl);
+          }
+        } catch {
+          // Bỏ qua lỗi
+        }
+      }
+    } catch {
+      // Bỏ qua lỗi lấy dữ liệu động
     }
 
     throw new NotFoundException('Không thể tải luồng phát nhạc từ YouTube.');
