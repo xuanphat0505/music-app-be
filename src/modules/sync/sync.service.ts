@@ -160,6 +160,33 @@ export class SyncService {
           penalty -= 30;
         }
 
+        // Lấy tên kênh từ các thuộc tính hiển thị kênh của video
+        const channelName = (
+          video.ownerText?.runs?.[0]?.text ||
+          video.shortBylineText?.runs?.[0]?.text ||
+          video.longBylineText?.runs?.[0]?.text ||
+          ''
+        ).toLowerCase();
+
+        // Ưu tiên cực cao cho các kênh tự động Topic từ YouTube (bản thu Studio gốc có thời lượng khớp chuẩn và 0s intro)
+        if (channelName.includes('topic')) {
+          penalty -= 120;
+        }
+
+        // Ưu tiên cho các kênh âm nhạc chính thức Vevo hoặc kênh nghệ sĩ chính thức
+        if (
+          channelName.includes('vevo') ||
+          channelName.includes('official') ||
+          cleanTitle.includes('official audio')
+        ) {
+          penalty -= 50;
+        }
+
+        // Ưu tiên tuyệt đối nếu thời lượng trùng khớp hoàn hảo (chênh lệch dưới 3 giây)
+        if (durationDiff <= 3) {
+          penalty -= 80;
+        }
+
         if (penalty < lowestPenalty) {
           lowestPenalty = penalty;
           bestVideoId = video.videoId;

@@ -90,11 +90,14 @@ export class SongsController {
 
     // Fallback: Lấy động danh sách instance từ api.invidious.io nếu toàn bộ danh sách tĩnh bị lỗi
     try {
-      const instancesRes = await axios.get('https://api.invidious.io/instances.json', { timeout: 3000 });
+      const instancesRes = await axios.get(
+        'https://api.invidious.io/instances.json',
+        { timeout: 3000 },
+      );
       const instances = instancesRes.data || [];
       const dynamicInstances = instances
-        .filter(([_, meta]) => meta.type === 'https' && meta.uri)
-        .map(([_, meta]) => meta.uri)
+        .filter(([, meta]) => meta.type === 'https' && meta.uri)
+        .map(([, meta]) => meta.uri)
         .slice(0, 10);
 
       for (const instance of dynamicInstances) {
