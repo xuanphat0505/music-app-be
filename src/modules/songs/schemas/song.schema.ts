@@ -30,8 +30,12 @@ export class Song extends Document {
   @Prop({ type: Number, default: 0 })
   spotifyPlaysCount: number;
 
-  @Prop({ type: Types.ObjectId, ref: 'Artist', required: true, index: true })
-  artist: Types.ObjectId | Artist;
+  @Prop({
+    type: [{ type: Types.ObjectId, ref: 'Artist' }],
+    required: true,
+    index: true,
+  })
+  artists: (Types.ObjectId | Artist)[];
 
   @Prop({ type: Types.ObjectId, ref: 'Album', default: null, index: true })
   album: Types.ObjectId | Album | null;

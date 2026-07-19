@@ -53,7 +53,7 @@ export class AlbumsService {
         .populate('artist')
         .populate({
           path: 'songs',
-          populate: { path: 'artist' },
+          populate: { path: 'artists' },
         })
         .exec();
     } else {
@@ -62,7 +62,7 @@ export class AlbumsService {
         .populate('artist')
         .populate({
           path: 'songs',
-          populate: { path: 'artist' },
+          populate: { path: 'artists' },
         })
         .exec();
     }
