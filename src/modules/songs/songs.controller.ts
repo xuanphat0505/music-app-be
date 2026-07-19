@@ -78,9 +78,16 @@ export class SongsController {
     for (const instance of invidiousInstances) {
       try {
         const streamUrl = `${instance}/latest_version?id=${youtubeVideoId}&itag=140&local=true`;
-        // Kiểm tra xem instance này có đang hoạt động tốt bằng cách gửi request HEAD nhanh
-        const response = await axios.head(streamUrl, { timeout: 2500 });
-        if (response.status === 200 || response.status === 206) {
+        // Kiểm tra xem instance này có đang hoạt động tốt bằng cách gửi request GET nhanh lấy 100 bytes đầu
+        const response = await axios.get(streamUrl, {
+          headers: { Range: 'bytes=0-99' },
+          timeout: 2500,
+        });
+        const contentType = String(response.headers['content-type'] || '');
+        if (
+          (response.status === 200 || response.status === 206) &&
+          !contentType.includes('text/html')
+        ) {
           return res.redirect(streamUrl);
         }
       } catch {
@@ -103,8 +110,15 @@ export class SongsController {
       for (const instance of dynamicInstances) {
         try {
           const streamUrl = `${instance}/latest_version?id=${youtubeVideoId}&itag=140&local=true`;
-          const response = await axios.head(streamUrl, { timeout: 2500 });
-          if (response.status === 200 || response.status === 206) {
+          const response = await axios.get(streamUrl, {
+            headers: { Range: 'bytes=0-99' },
+            timeout: 2500,
+          });
+          const contentType = String(response.headers['content-type'] || '');
+          if (
+            (response.status === 200 || response.status === 206) &&
+            !contentType.includes('text/html')
+          ) {
             return res.redirect(streamUrl);
           }
         } catch {
