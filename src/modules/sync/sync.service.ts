@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import axios from 'axios';
 import { Artist } from '@/modules/artists/schemas/artist.schema';
 import { Song } from '@/modules/songs/schemas/song.schema';
@@ -63,6 +63,16 @@ export class SyncService {
       .replace(/[^\w\s]/gi, '')
       .toLowerCase()
       .trim();
+  }
+
+  // Phân tách chuỗi tên nghệ sĩ dựa trên các ký tự phân tách phổ biến
+  private splitArtists(artistStr: string): string[] {
+    if (!artistStr) return [];
+    const regex = /\s+(?:and|&|x|X|feat\.?|ft\.?|featuring)\s+|\s*,\s*/g;
+    return artistStr
+      .split(regex)
+      .map((name) => name.trim())
+      .filter((name) => name.length > 0);
   }
 
   // Tìm kiếm đệ quy các đối tượng videoRenderer trong phản hồi JSON từ YouTube
@@ -369,21 +379,24 @@ export class SyncService {
             continue;
           }
 
-          const pseudoSpotifyArtistId = `artist_${String(
-            track.artistId || track.artistViewUrl || artistFullName,
-          ).replace(/[^a-zA-Z0-9]/g, '')}`;
+          const artistNames = this.splitArtists(artistFullName);
+          const artistIds: Types.ObjectId[] = [];
 
-          const artistDoc = await this.artistModel.findOneAndUpdate(
-            { spotifyId: pseudoSpotifyArtistId },
-            {
-              name: artistFullName,
-              avatar: track.artworkUrl100
-                ? track.artworkUrl100.replace('100x100bb.jpg', '240x240bb.jpg')
-                : '',
-              bio: `Nghệ sĩ hiện đại được đồng bộ từ kho nhạc.`,
-            },
-            { returnDocument: 'after', upsert: true },
-          );
+          for (const name of artistNames) {
+            const pseudoSpotifyArtistId = `artist_${String(name).replace(/[^a-zA-Z0-9]/g, '')}`;
+            const artistDoc = await this.artistModel.findOneAndUpdate(
+              { spotifyId: pseudoSpotifyArtistId },
+              {
+                name: name,
+                avatar: track.artworkUrl100
+                  ? track.artworkUrl100.replace('100x100bb.jpg', '240x240bb.jpg')
+                  : '',
+                bio: `Nghệ sĩ hiện đại được đồng bộ từ kho nhạc.`,
+              },
+              { returnDocument: 'after', upsert: true },
+            );
+            artistIds.push(artistDoc._id as Types.ObjectId);
+          }
 
           const artworkUrl = track.artworkUrl100
             ? track.artworkUrl100.replace('100x100bb.jpg', '480x480bb.jpg')
@@ -397,7 +410,7 @@ export class SyncService {
               duration: durationSec,
               artwork: artworkUrl,
               genre: track.primaryGenreName || 'Pop',
-              artist: artistDoc._id,
+              artists: artistIds,
               streamUrl: `/songs/stream/${youtubeVideoId}`,
               lyrics: lyricsData.lyrics,
               syncedLyrics: lyricsData.syncedLyrics,

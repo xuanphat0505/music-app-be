@@ -17,9 +17,18 @@ export class ArtistsService {
     const limitNum = parseInt(limit, 10);
     const skip = (pageNum - 1) * limitNum;
 
-    const query: any = {};
+    const combinationPattern =
+      /\s+(?:and|&|x|feat\.?|ft\.?|featuring)\s+|\s*,\s*/i;
+
+    const query: any = {
+      // Lọc bỏ các nghệ sĩ kết hợp 
+      name: { $not: combinationPattern },
+    };
+
     if (q) {
-      const searchRegex = new RegExp(q, 'i');
+      // Dùng word boundary để tránh substring match không mong muốn
+      const escapedQ = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchRegex = new RegExp(`\\b${escapedQ}`, 'i');
       query.$or = [{ name: searchRegex }, { username: searchRegex }];
     }
 
@@ -70,7 +79,7 @@ export class ArtistsService {
     // Tìm nghệ sĩ trước để đảm bảo nghệ sĩ tồn tại và lấy đúng ObjectId
     const artist = await this.findOne(artistId);
 
-    const query = { artist: artist._id };
+    const query = { artists: artist._id };
 
     const [songs, total] = await Promise.all([
       this.songModel
@@ -78,7 +87,7 @@ export class ArtistsService {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNum)
-        .populate('artist')
+        .populate('artists')
         .populate('album')
         .exec(),
       this.songModel.countDocuments(query).exec(),

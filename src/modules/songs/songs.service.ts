@@ -40,7 +40,7 @@ export class SongsService {
       const artistIds = matchedArtists.map((a) => a._id);
 
       // Bước 2: Tạo query tìm kiếm bài hát khớp tên HOẶC thuộc nghệ sĩ khớp tên
-      query.$or = [{ title: searchRegex }, { artist: { $in: artistIds } }];
+      query.$or = [{ title: searchRegex }, { artists: { $in: artistIds } }];
     }
 
     // Xử lý tiêu chí sắp xếp
@@ -58,7 +58,7 @@ export class SongsService {
         .sort(sortOption)
         .skip(skip)
         .limit(limitNum)
-        .populate('artist')
+        .populate('artists')
         .populate('album')
         .exec(),
       this.songModel.countDocuments(query).exec(),
@@ -83,7 +83,7 @@ export class SongsService {
       .find()
       .sort({ playsCount: -1, spotifyPlaysCount: -1 })
       .limit(limit)
-      .populate('artist')
+      .populate('artists')
       .populate('album')
       .exec();
   }
@@ -118,13 +118,13 @@ export class SongsService {
     if (Types.ObjectId.isValid(id)) {
       song = await this.songModel
         .findById(id)
-        .populate('artist')
+        .populate('artists')
         .populate('album')
         .exec();
     } else {
       song = await this.songModel
         .findOne({ spotifyId: id })
-        .populate('artist')
+        .populate('artists')
         .populate('album')
         .exec();
     }
@@ -145,7 +145,7 @@ export class SongsService {
           { $inc: { playsCount: 1 } },
           { returnDocument: 'after' },
         )
-        .populate('artist')
+        .populate('artists')
         .populate('album')
         .exec();
     } else {
@@ -155,7 +155,7 @@ export class SongsService {
           { $inc: { playsCount: 1 } },
           { returnDocument: 'after' },
         )
-        .populate('artist')
+        .populate('artists')
         .populate('album')
         .exec();
     }
@@ -180,9 +180,12 @@ export class SongsService {
     }
 
     try {
-      const artistName = (
-        typeof song.artist === 'string' ? song.artist : song.artist.name
-      ).trim();
+      let artistName = '';
+      if (Array.isArray(song.artists) && song.artists.length > 0) {
+        const primaryArtist = song.artists[0];
+        artistName = typeof primaryArtist === 'string' ? primaryArtist : (primaryArtist as any).name;
+      }
+      artistName = artistName.trim();
       const trackName = song.title.trim();
       const duration = Math.round(song.duration);
 
