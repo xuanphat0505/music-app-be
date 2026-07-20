@@ -2,10 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { LibrariesController } from './libraries.controller';
 import { LibrariesService } from './libraries.service';
-import {
-  UserLibrary,
-  UserLibrarySchema,
-} from './schemas/user-library.schema';
+import { UserLibrary, UserLibrarySchema } from './schemas/user-library.schema';
 import { Song, SongSchema } from '@/modules/songs/schemas/song.schema';
 
 @Module({

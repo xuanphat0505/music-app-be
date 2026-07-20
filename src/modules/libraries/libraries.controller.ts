@@ -19,10 +19,7 @@ export class LibrariesController {
   // Bật hoặc tắt trạng thái lưu bài hát trong thư viện cá nhân
   @Post('toggle/:songId')
   @ResponseMessage('Cập nhật trạng thái bài hát trong thư viện thành công.')
-  async toggleSongInLibrary(
-    @Req() req: any,
-    @Param('songId') songId: string,
-  ) {
+  async toggleSongInLibrary(@Req() req: any, @Param('songId') songId: string) {
     const userId = req.user._id.toString();
     return this.librariesService.toggleSongInLibrary(userId, songId);
   }
@@ -38,11 +35,7 @@ export class LibrariesController {
     const userId = req.user._id.toString();
     const pageNum = page ? parseInt(page, 10) : 1;
     const limitNum = limit ? parseInt(limit, 10) : 20;
-    return this.librariesService.getUserLibrarySongs(
-      userId,
-      pageNum,
-      limitNum,
-    );
+    return this.librariesService.getUserLibrarySongs(userId, pageNum, limitNum);
   }
 
   // Lấy toàn bộ danh sách ID bài hát có trong thư viện của người dùng

@@ -183,7 +183,10 @@ export class SongsService {
       let artistName = '';
       if (Array.isArray(song.artists) && song.artists.length > 0) {
         const primaryArtist = song.artists[0];
-        artistName = typeof primaryArtist === 'string' ? primaryArtist : (primaryArtist as any).name;
+        artistName =
+          typeof primaryArtist === 'string'
+            ? primaryArtist
+            : primaryArtist.name;
       }
       artistName = artistName.trim();
       const trackName = song.title.trim();

@@ -389,13 +389,16 @@ export class SyncService {
               {
                 name: name,
                 avatar: track.artworkUrl100
-                  ? track.artworkUrl100.replace('100x100bb.jpg', '240x240bb.jpg')
+                  ? track.artworkUrl100.replace(
+                      '100x100bb.jpg',
+                      '240x240bb.jpg',
+                    )
                   : '',
                 bio: `Nghệ sĩ hiện đại được đồng bộ từ kho nhạc.`,
               },
               { returnDocument: 'after', upsert: true },
             );
-            artistIds.push(artistDoc._id as Types.ObjectId);
+            artistIds.push(artistDoc._id);
           }
 
           const artworkUrl = track.artworkUrl100

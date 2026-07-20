@@ -38,7 +38,7 @@ export class LibrariesService {
 
     // Nếu chưa có, tiến hành thêm mới
     try {
-      const created = await this.userLibraryModel.create({
+      await this.userLibraryModel.create({
         user: userObjId,
         song: songObjId,
       });
@@ -97,6 +97,6 @@ export class LibrariesService {
       .select('song')
       .exec();
 
-    return items.map((item) => item.song.toString());
+    return items.map((item: any) => item.song.toString());
   }
 }
