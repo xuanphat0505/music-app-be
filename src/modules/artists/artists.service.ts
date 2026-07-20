@@ -21,7 +21,7 @@ export class ArtistsService {
       /\s+(?:and|&|x|feat\.?|ft\.?|featuring)\s+|\s*,\s*/i;
 
     const query: any = {
-      // Lọc bỏ các nghệ sĩ kết hợp 
+      // Lọc bỏ các nghệ sĩ kết hợp
       name: { $not: combinationPattern },
     };
 

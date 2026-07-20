@@ -12,6 +12,7 @@ import { AlbumsModule } from '@/modules/albums/albums.module';
 import { PlaylistsModule } from '@/modules/playlists/playlists.module';
 import { FavoritesModule } from '@/modules/favorites/favorites.module';
 import { HistoryModule } from '@/modules/history/history.module';
+import { LibrariesModule } from '@/modules/libraries/libraries.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { HistoryModule } from '@/modules/history/history.module';
     PlaylistsModule,
     FavoritesModule,
     HistoryModule,
+    LibrariesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
